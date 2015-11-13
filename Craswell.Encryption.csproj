@@ -41,4 +41,14 @@
       <Name>ManagedOpenSsl</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\openssl-net\native\windows\x86\libeay32.dll">
+      <Link>libeay32.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\openssl-net\native\windows\x86\ssleay32.dll">
+      <Link>ssleay32.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
