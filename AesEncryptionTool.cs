@@ -57,6 +57,32 @@ namespace Craswell.Encryption
         }
 
         /// <summary>
+        /// Encrypts an integer and returns a base64 encoded ciphertext.
+        /// </summary>
+        /// <returns>The resulting ciphertext.</returns>
+        /// <param name="integer">The inetger to encrypt.</param>
+        /// <param name="passphrase">The passphrase used to encrypt the text.</param>
+        public string EncryptInt(int integer, string passphrase)
+        {
+            string salt = GenerateSalt();
+            byte[] saltBytes = encoding.GetBytes(salt);
+
+            byte[] integerBytes = BitConverter.GetBytes(integer);
+            byte[] passphraseBytes = encoding.GetBytes(passphrase);
+
+            byte[] toEncrypt = new byte[saltBytes.Length + integerBytes.Length];
+            Buffer.BlockCopy(
+                saltBytes,
+                0,
+                toEncrypt,
+                0,
+                saltBytes.Length);
+            Buffer.BlockCopy(integerBytes, 0, toEncrypt, saltBytes.Length, integerBytes.Length);
+
+            return this.Encrypt(salt, toEncrypt, passphraseBytes);
+        }
+
+        /// <summary>
         /// Decrypts the text.
         /// </summary>
         /// <returns>The resulting plaintext.</returns>
@@ -72,6 +98,27 @@ namespace Craswell.Encryption
             byte[] encryptedBytes = Convert.FromBase64String(encryptedText);
 
             return this.Decrypt(salt, encryptedBytes, passphraseBytes);
+        }
+
+        /// <summary>
+        /// Decrypts an encrypted integer.
+        /// </summary>
+        /// <returns>The resulting integer.</returns>
+        /// <param name="ciphertext">The ciphertext to decrypt.</param>
+        /// <param name="passphrase">The passphrase used to decrypt the text.</param>
+        public int DecryptInt(string ciphertext, string passphrase)
+        {
+            string salt = ciphertext.Substring(0, ciphertext.IndexOf(SaltDelimiter) + SaltDelimiter.Length);
+            string encryptedText = ciphertext.Replace(salt, string.Empty);
+
+            salt = salt.Replace(SaltDelimiter, string.Empty);
+            byte[] passphraseBytes = this.encoding.GetBytes(passphrase);
+            byte[] encryptedBytes = Convert.FromBase64String(encryptedText);
+
+            string text = this.Decrypt(salt, encryptedBytes, passphraseBytes);
+            byte[] integerBytes = encoding.GetBytes(text);
+
+            return BitConverter.ToInt32(integerBytes, 0);
         }
 
         /// <summary>
@@ -100,7 +147,7 @@ namespace Craswell.Encryption
                 byte[] iv;
                 byte[] encryptionKey = cc.BytesToKey(
                     MessageDigest.SHA512,
-                    encoding.GetBytes(salt),
+                    this.encoding.GetBytes(salt),
                     passphraseBytes,
                     Iterations,
                     out iv);
@@ -131,13 +178,13 @@ namespace Craswell.Encryption
                 byte[] iv;
                 byte[] encryptionKey = cc.BytesToKey(
                     MessageDigest.SHA512,
-                    encoding.GetBytes(salt),
+                    this.encoding.GetBytes(salt),
                     passphraseBytes,
                     Iterations,
                     out iv);
 
                 byte[] decryptedBytes = cc.Decrypt(data, encryptionKey, iv);
-                string decryptedText = encoding.GetString(decryptedBytes);
+                string decryptedText = this.encoding.GetString(decryptedBytes);
 
                 return decryptedText.Replace(salt, string.Empty);
             }
